@@ -56,11 +56,22 @@ function loginUser(dispatch, login, password, history, setIsLoading, setError) {
     email: login,
     password: password,
   };
+
+  const headers = {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+
   axios
-    .post(process.env.REACT_APP_REST_API_LOCATION + "admin/login", data)
+    .post(
+      process.env.REACT_APP_REST_API_LOCATION + "admin/login",
+      data,
+      headers,
+    )
     .then((response) => {
       localStorage.setItem("id_token", response.data.data.token);
-      localStorage.setItem("user", response.data.data.user);
+      localStorage.setItem("user", JSON.stringify(response.data.data.user));
       dispatch({ type: "LOGIN_SUCCESS" });
       history.push("/app/dashboard");
       console.log("response", response);

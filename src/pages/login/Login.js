@@ -10,7 +10,7 @@ import {
 } from "@material-ui/core";
 import classnames from "classnames";
 import moment from "moment";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { withRouter } from "react-router-dom";
 // context
 import { loginUser, useUserDispatch } from "../../context/UserContext";
@@ -26,6 +26,17 @@ function Login(props) {
 
   // global
   var userDispatch = useUserDispatch();
+
+  useEffect(() => {
+    /* initiateSocketConnection();
+    subscribeToNotifications((err, data) => {
+      console.log("data", data);
+    });
+    return () => {
+      disconnectSocket();
+    };*/
+    // subscribeToNotifications
+  }, []);
 
   // local
   var [isLoading, setIsLoading] = useState(false);

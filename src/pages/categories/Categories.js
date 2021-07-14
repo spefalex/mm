@@ -1,14 +1,13 @@
 import Button from "@material-ui/core/Button";
+import Checkbox from "@material-ui/core/Checkbox";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import IconButton from "@material-ui/core/IconButton";
-import InputAdornment from "@material-ui/core/InputAdornment";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Paper from "@material-ui/core/Paper";
 import Snackbar from "@material-ui/core/Snackbar";
 import { makeStyles } from "@material-ui/core/styles";
-import Switch from "@material-ui/core/Switch";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
@@ -19,20 +18,12 @@ import TableRow from "@material-ui/core/TableRow";
 import TextField from "@material-ui/core/TextField";
 import DeleteOutline from "@material-ui/icons/DeleteOutline";
 import EditOutlined from "@material-ui/icons/EditOutlined";
-import Visibility from "@material-ui/icons/Visibility";
-import VisibilityOff from "@material-ui/icons/VisibilityOff";
 import MuiAlert from "@material-ui/lab/Alert";
 import axios from "axios";
-import React, { Fragment, useEffect, useState } from "react";
+import _ from "lodash";
+import React, { useEffect, useState } from "react";
 // components
 import PageTitle from "../../components/PageTitle";
-import {
-  regexCheckNumeric,
-  regexLowerCase,
-  regexSpecialChar,
-  regexUperCase,
-} from "../../validators/password";
-
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
 }
@@ -40,11 +31,6 @@ function Alert(props) {
 const api = axios.create({
   baseURL: process.env.REACT_APP_REST_API_LOCATION,
 });
-
-function validateEmail(email) {
-  const re = /^((?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\]))$/;
-  return re.test(String(email).toLowerCase());
-}
 
 var columns = [
   { title: "Id", id: "id", hidden: true },
@@ -63,39 +49,87 @@ const useStyles = makeStyles({
 });
 
 export default function Categories() {
+  const reactTags = React.useRef();
   const classes = useStyles();
   const [data, setData] = useState([]); //table data
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [id, setId] = React.useState("");
   const [open, setOpen] = React.useState(false);
   const [openAlert, setOpenAlert] = React.useState(false);
   const [openAlertError, setOpenAlertError] = React.useState(false);
   const [state, setState] = React.useState(false);
   const [name, setName] = React.useState("");
-  const [last_name, setLastname] = React.useState("");
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [id, setId] = React.useState("");
-  const [confirm_password, setConfirmPassword] = React.useState("");
-  const [showpassword, setShowPassword] = React.useState(false);
-  const [showpassword2, setShowPassword2] = React.useState(false);
+  const [file, setFile] = React.useState("");
+  const [fileUrl, setFileUrl] = React.useState("");
+  const [image, setImage] = React.useState("");
+  const [tags, setTags] = React.useState([]);
+  const [suggestions, setSuggestions] = React.useState([]);
   const [isEdit, setEdit] = React.useState(false);
+  const [currentCategoriesTypes, setCategoriesTypes] = React.useState([]);
 
   const handleClickOpen = (data) => {
+    console.log("data", data);
     prefilPopUp(data);
+    data.image ? setFileUrl(data.image.url) : setFileUrl("");
     setOpen(true);
   };
-
-  function conditionHelperTextEmail() {
-    if (email && !validateEmail(email)) {
-      return true;
-    }
-  }
 
   function addNewUser() {
     setEdit(true);
     revertPopup();
     setOpen(true);
+  }
+
+  function onDelete(i) {
+    const tags = tags.slice(0);
+    tags.splice(i, 1);
+    setTags(tags);
+  }
+
+  function onAddition(tag) {
+    const tags = [].concat(tags, tag);
+    setTags(tags);
+  }
+
+  function searchEngine(text) {
+    setTags([]);
+    if (_.includes(currentCategoriesTypes, text.target.value.toString())) {
+      const sector_engine = currentCategoriesTypes.filter((suggestion_list) => {
+        return suggestion_list !== text.target.value.toString();
+      });
+      setCategoriesTypes(sector_engine);
+    } else {
+      currentCategoriesTypes.push(text.target.value);
+      setCategoriesTypes(currentCategoriesTypes);
+    }
+  }
+
+  function onChange(e) {
+    let files;
+    let file = e.target.files;
+
+    setFile({
+      file,
+    });
+
+    const reader = new FileReader();
+    if (e.dataTransfer) {
+      files = e.dataTransfer.files;
+    } else if (e.target) {
+      files = e.target.files;
+    }
+    reader.onload = () => {
+      setImage(reader.result);
+    };
+    if (reader) {
+      reader.readAsDataURL(files[0]);
+    }
+  }
+
+  function checkEngine(engine) {
+    // let suggestion_list = currentCategoriesTypes;
+    return _.includes(currentCategoriesTypes, engine.toString());
   }
 
   function renderImage(src) {
@@ -112,62 +146,9 @@ export default function Categories() {
     return datas.length > 0 && datas.map((data) => <li>{data.designation}</li>);
   }
 
-  function clickAdd() {
-    let finale_data = [];
-    const headers = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("id_token")}`,
-      },
-    };
-    const payload = {
-      email: email,
-      firstname: name,
-      lastname: last_name,
-      roles: [1],
-    };
+  function clickAdd() {}
 
-    api
-      .post("/admin/users", payload, headers)
-      .then((res) => {
-        payload.id = res.data.data.id;
-        let new_data = [payload];
-        finale_data = new_data.concat(data);
-        setData(finale_data);
-        return res.data.data.id;
-      })
-
-      .then((refId) => {
-        const data = {
-          password: password,
-          isActive: true,
-        };
-        return api.put(`/admin/users/${refId}`, data, headers);
-      })
-      .then((res) => {
-        console.log(res);
-        handleClose();
-        setOpenAlert(true);
-      })
-      .catch((error) => {
-        setOpenAlertError(true);
-        console.log(error);
-      });
-  }
-
-  function handleClickShowPassword() {
-    setShowPassword(!showpassword);
-  }
-
-  function handleClickShowPassword2() {
-    setShowPassword2(!showpassword2);
-  }
-
-  function alertMessage() {
-    if (email && !validateEmail(email)) {
-      return "Format email invalide";
-    }
-  }
+  function alertMessage() {}
 
   function updateStateLikeRealTime(new_info) {
     const newList = data.map((res) => {
@@ -186,57 +167,30 @@ export default function Categories() {
   }
 
   function disabledEdit() {
-    if (
-      !name ||
-      !last_name ||
-      !email ||
-      !validateEmail(email) ||
-      (password && checkPassword(password)) ||
-      (password && password !== confirm_password)
-    ) {
+    if (!name || (!fileUrl && !image) || currentCategoriesTypes.length === 0) {
       return true;
     }
   }
 
-  function disabledAdd() {
-    if (
-      !name ||
-      !last_name ||
-      !email ||
-      !validateEmail(email) ||
-      !password ||
-      !confirm_password ||
-      (password && checkPassword(password)) ||
-      (password && password !== confirm_password)
-    ) {
-      return true;
-    }
-  }
+  function disabledAdd() {}
 
-  function checkPassword() {
-    if (
-      password &&
-      (!regexLowerCase.test(password) ||
-        !regexUperCase.test(password) ||
-        !regexSpecialChar.test(password) ||
-        !regexCheckNumeric.test(password))
-    ) {
-      return true;
-    }
-  }
+  function checkPassword() {}
 
   function prefilPopUp(data) {
-    setName(data.firstname);
-    setEmail(data.email);
-    setLastname(data.lastname);
-    setState(data.isActive);
-    setId(data.id);
+    setName(data.designation);
+    if (data.categorie_types.length > 0) {
+      const response = data.categorie_types.map((res) => {
+        return res.id.toString();
+      });
+
+      setCategoriesTypes(response);
+    }
   }
 
   function revertPopup(data) {
     setName("");
-    setEmail("");
-    setLastname("");
+    setImage("");
+    setCategoriesTypes([]);
   }
 
   const handleChange = (event) => {
@@ -246,6 +200,8 @@ export default function Categories() {
   const handleClose = () => {
     setOpen(false);
     setEdit(false);
+
+    revertPopup();
   };
 
   const handleCloseAlerte = () => {
@@ -268,6 +224,16 @@ export default function Categories() {
   const [iserror, setIserror] = useState(false);
   const [errorMessages, setErrorMessages] = useState([]);
 
+  function formatSuggestion(data) {
+    const response =
+      data &&
+      data.length > 0 &&
+      data.map((res) => {
+        return { ...res, name: res.designation };
+      });
+    return response;
+  }
+
   useEffect(() => {
     const headers = {
       headers: {
@@ -283,40 +249,18 @@ export default function Categories() {
       .catch((error) => {
         console.log("Error");
       });
-  }, []);
 
-  function submitEdit() {
-    const headers = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("id_token")}`,
-      },
-    };
-
-    let payload = {
-      email: email,
-      firstname: name,
-      lastname: last_name,
-      roles: [1],
-      isActive: state,
-    };
-    if (
-      (password && !checkPassword(password)) ||
-      (password && password === confirm_password)
-    ) {
-      payload.password = password;
-    }
     api
-      .put(`/admin/users/${id}`, payload, headers)
+      .get("/services-types?_sort=id:DESC", headers)
       .then((res) => {
-        updateStateLikeRealTime(res.data.data);
-        handleClose();
-        setOpenAlert(true);
+        setSuggestions(res.data);
       })
       .catch((error) => {
         console.log("Error");
       });
-  }
+  }, []);
+
+  function submitEdit() {}
 
   return (
     <>
@@ -367,7 +311,9 @@ export default function Categories() {
                           </ul>
                         )}
                       </TableCell>
-                      <EditOutlined></EditOutlined>
+                      <EditOutlined
+                        onClick={handleClickOpen.bind(this, row)}
+                      ></EditOutlined>
                       <DeleteOutline></DeleteOutline>
                     </TableRow>
                   );
@@ -394,108 +340,54 @@ export default function Categories() {
             {!isEdit ? `Modifications ${name}` : "Nouveau admin"}
           </DialogTitle>
           <DialogContent>
+            {fileUrl && !image ? (
+              <img
+                width="127px"
+                height="127px"
+                src={process.env.REACT_APP_IMG_LOCATION + fileUrl}
+              />
+            ) : (
+              <img width="127px" height="127px" src={image} />
+            )}
+            <Button variant="contained" component="label">
+              {!fileUrl ? "Ajout photo" : "Modifier photo"}
+              <input
+                type="file"
+                accept="image/x-png,image/gif,image/jpeg,image/jpg"
+                hidden
+                onChange={onChange}
+              />
+            </Button>
+
             <TextField
               autoFocus
               margin="dense"
               id="name"
-              label="Nom"
+              label="Desgignation"
               value={name}
               onChange={(e) => setName(e.target.value)}
               type="text"
               fullWidth
             />
-            <TextField
-              autoFocus
-              margin="dense"
-              id="firstname"
-              label="Prénom"
-              value={last_name}
-              onChange={(e) => setLastname(e.target.value)}
-              type="text"
-              fullWidth
-            />
-            <TextField
-              autoFocus
-              margin="dense"
-              id="email"
-              onChange={(e) => setEmail(e.target.value)}
-              value={email}
-              label="Email Address"
-              type="email"
-              helperText={alertMessage()}
-              error={conditionHelperTextEmail()}
-              fullWidth
-            />
-            <TextField
-              autoFocus
-              margin="dense"
-              onChange={(e) => setPassword(e.target.value)}
-              id="password"
-              label="Mot de passe"
-              type={showpassword ? "text" : "password"}
-              error={checkPassword()}
-              helperText={
-                checkPassword()
-                  ? "Minimum 6 caractères, au moins 1 chiffre, 1 caractère spécial, 1 lettre minuscule et 1 lettre majuscule"
-                  : ""
-              }
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      edge="end"
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}
-                    >
-                      {!showpassword ? <Visibility /> : <VisibilityOff />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              fullWidth
-            />
-            <TextField
-              autoFocus
-              margin="dense"
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              id="confirm-password"
-              label="Confirmation mot de passe"
-              type={showpassword2 ? "text" : "password"}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      edge="end"
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword2}
-                    >
-                      {!showpassword2 ? <Visibility /> : <VisibilityOff />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              error={confirm_password !== "" && confirm_password !== password}
-              helperText={
-                confirm_password !== "" && confirm_password !== password
-                  ? "Les mots de passe que vous avez entrés ne sont pas identiques."
-                  : ""
-              }
-              fullWidth
-            />
+            <p> Categories types </p>
 
-            {!isEdit ? (
-              <Fragment>
-                Active
-                <Switch
-                  checked={state}
-                  onChange={handleChange}
-                  name="checkedA"
-                  inputProps={{ "aria-label": "secondary checkbox" }}
+            {suggestions.length > 0 &&
+              suggestions.map((item, index) => (
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      name="checkedA"
+                      color="primary"
+                      onChange={searchEngine}
+                      checked={checkEngine(item.id.toString())}
+                      value={item.id}
+                      id={`engine${index}`}
+                    />
+                  }
+                  label={item.designation}
+                  className="col-6 col-sm-3"
                 />
-              </Fragment>
-            ) : (
-              ""
-            )}
+              ))}
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose} color="primary">

@@ -11,6 +11,8 @@ import React from "react";
 import { Redirect, Route, Switch, withRouter } from "react-router-dom";
 // context
 import { useLayoutState } from "../../context/LayoutContext";
+import CategoriesTypes from "../../pages/categories-types/CategoriesTypes";
+import Categories from "../../pages/categories/Categories";
 import Charts from "../../pages/charts";
 // pages
 import Dashboard from "../../pages/dashboard";
@@ -46,6 +48,8 @@ function Layout(props) {
           <Switch>
             <Route path="/app/dashboard" component={Dashboard} />
             <Route path="/app/users-admin" component={UsersAdmin} />
+            <Route path="/app/categories" component={Categories} />
+            <Route path="/app/categories-types" component={CategoriesTypes} />
             <Route path="/app/typography" component={Typography} />
             <Route path="/app/tables" component={Tables} />
             <Route path="/app/notifications" component={Notifications} />

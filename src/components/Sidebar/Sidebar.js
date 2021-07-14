@@ -9,7 +9,7 @@ import {
   Home as HomeIcon,
   LibraryBooks as LibraryIcon,
   NotificationsNone as NotificationsIcon,
-  QuestionAnswer as SupportIcon,
+  QuestionAnswer as SupportIcon
 } from "@material-ui/icons";
 import { useTheme } from "@material-ui/styles";
 import classNames from "classnames";
@@ -19,7 +19,7 @@ import { withRouter } from "react-router-dom";
 import {
   toggleSidebar,
   useLayoutDispatch,
-  useLayoutState,
+  useLayoutState
 } from "../../context/LayoutContext";
 import Dot from "./components/Dot";
 // components
@@ -37,19 +37,31 @@ const structure = [
   },
   {
     id: 2,
+    label: "Categories",
+    link: "/app/categories",
+    icon: <AssignmentInd />,
+  },
+  {
+    id: 3,
+    label: "Categories Types",
+    link: "/app/categories-types",
+    icon: <AssignmentInd />,
+  },
+  {
+    id: 4,
     label: "Typography",
     link: "/app/typography",
     icon: <TypographyIcon />,
   },
-  { id: 3, label: "Tables", link: "/app/tables", icon: <TableIcon /> },
+  { id: 5, label: "Tables", link: "/app/tables", icon: <TableIcon /> },
   {
-    id: 4,
+    id: 6,
     label: "Notifications",
     link: "/app/notifications",
     icon: <NotificationsIcon />,
   },
   {
-    id: 5,
+    id: 7,
     label: "UI Elements",
     link: "/app/ui",
     icon: <UIElementsIcon />,
@@ -59,42 +71,42 @@ const structure = [
       { label: "Maps", link: "/app/ui/maps" },
     ],
   },
-  { id: 6, type: "divider" },
-  { id: 7, type: "title", label: "HELP" },
+  { id: 8, type: "divider" },
+  { id: 9, type: "title", label: "HELP" },
   {
-    id: 8,
+    id: 10,
     label: "Library",
     link: "https://flatlogic.com/templates",
     icon: <LibraryIcon />,
   },
   {
-    id: 9,
+    id: 11,
     label: "Support",
     link: "https://flatlogic.com/forum/",
     icon: <SupportIcon />,
   },
   {
-    id: 10,
+    id: 12,
     label: "FAQ",
     link: "https://flatlogic.com/forum/",
     icon: <FAQIcon />,
   },
-  { id: 11, type: "divider" },
-  { id: 12, type: "title", label: "PROJECTS" },
+  { id: 13, type: "divider" },
+  { id: 14, type: "title", label: "PROJECTS" },
   {
-    id: 13,
+    id: 15,
     label: "My recent",
     link: "",
     icon: <Dot size="small" color="secondary" />,
   },
   {
-    id: 14,
+    id: 16,
     label: "Starred",
     link: "",
     icon: <Dot size="small" color="primary" />,
   },
   {
-    id: 15,
+    id: 17,
     label: "Background",
     link: "",
     icon: <Dot size="small" color="secondary" />,

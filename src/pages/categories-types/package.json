@@ -1,0 +1,6 @@
+{
+  "name": "UsersAdmin",
+  "version": "0.0.0",
+  "main": "UsersAdmin.js",
+  "private": true
+}

@@ -60,7 +60,7 @@ export default function Categories() {
   const [openAlertError, setOpenAlertError] = React.useState(false);
   const [state, setState] = React.useState(false);
   const [name, setName] = React.useState("");
-  const [file, setFile] = React.useState("");
+  const [file, setFile] = React.useState(null);
   const [fileUrl, setFileUrl] = React.useState("");
   const [image, setImage] = React.useState("");
   const [tags, setTags] = React.useState([]);
@@ -69,14 +69,13 @@ export default function Categories() {
   const [currentCategoriesTypes, setCategoriesTypes] = React.useState([]);
 
   const handleClickOpen = (data) => {
-    console.log("data", data);
     prefilPopUp(data);
     data.image ? setFileUrl(data.image.url) : setFileUrl("");
     setOpen(true);
+    setEdit(true);
   };
 
   function addNewUser() {
-    setEdit(true);
     revertPopup();
     setOpen(true);
   }
@@ -107,12 +106,8 @@ export default function Categories() {
 
   function onChange(e) {
     let files;
-    let file = e.target.files;
-
-    setFile({
-      file,
-    });
-
+    let file = e.target.files[0];
+    setFile(file);
     const reader = new FileReader();
     if (e.dataTransfer) {
       files = e.dataTransfer.files;
@@ -155,10 +150,9 @@ export default function Categories() {
       if (res.id === id) {
         return {
           ...res,
-          isActive: new_info.isActive,
-          email: new_info.email,
-          firstname: new_info.firstname,
-          lastname: new_info.lastname,
+          designation: new_info.designation,
+          categorie_types: new_info.categorie_types,
+          image: new_info.image,
         };
       }
       return { ...res };
@@ -178,6 +172,7 @@ export default function Categories() {
 
   function prefilPopUp(data) {
     setName(data.designation);
+    setId(data.id);
     if (data.categorie_types.length > 0) {
       const response = data.categorie_types.map((res) => {
         return res.id.toString();
@@ -199,9 +194,10 @@ export default function Categories() {
 
   const handleClose = () => {
     setOpen(false);
-    setEdit(false);
-
     revertPopup();
+    setTimeout(() => {
+      setEdit(false);
+    }, 2000);
   };
 
   const handleCloseAlerte = () => {
@@ -260,7 +256,71 @@ export default function Categories() {
       });
   }, []);
 
-  function submitEdit() {}
+  function submitEdit() {
+    const headers = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("id_token")}`,
+      },
+    };
+
+    const toNumbers = (arr) => arr.map(Number);
+    let new_data;
+    const payload = {
+      designation: name,
+      categorie_types: toNumbers(currentCategoriesTypes),
+    };
+
+    if (file) {
+      api
+        .put(`/services/${id}`, payload, headers)
+        .then((res) => {
+          payload.id = res.data.id;
+          new_data = res.data;
+          // finale_data = new_data.concat(data);
+
+          return res.data.id;
+        })
+
+        .then((refId) => {
+          const headersFiles = {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${localStorage.getItem("id_token")}`,
+            },
+          };
+          const data = new FormData();
+          data.append("files", file);
+          data.append("ref", "Services");
+          data.append("refId", refId);
+          data.append("field", "image");
+          return api.post(`/upload`, data, headersFiles);
+        })
+        .then((res) => {
+          new_data.image = res.data[0];
+          updateStateLikeRealTime(new_data);
+          setOpenAlert(true);
+          handleClose();
+        })
+        .catch((error) => {
+          setOpenAlertError(true);
+          console.log(error);
+        });
+    } else {
+      api
+        .put(`/services/${id}`, payload, headers)
+        .then((res) => {
+          console.log("res", res.data);
+          updateStateLikeRealTime(res.data);
+          setOpenAlert(true);
+          handleClose();
+        })
+
+        .catch((err) => {
+          console.log("err", err);
+        });
+    }
+  }
 
   return (
     <>
@@ -337,7 +397,7 @@ export default function Categories() {
           aria-labelledby="form-dialog-title"
         >
           <DialogTitle id="form-dialog-title">
-            {!isEdit ? `Modifications ${name}` : "Nouveau admin"}
+            {isEdit ? `Modifications ${name}` : "Nouveau Categories"}
           </DialogTitle>
           <DialogContent>
             {fileUrl && !image ? (
@@ -393,7 +453,7 @@ export default function Categories() {
             <Button onClick={handleClose} color="primary">
               Annuler
             </Button>
-            {!isEdit ? (
+            {isEdit ? (
               <Button
                 onClick={submitEdit}
                 color="primary"
@@ -430,7 +490,7 @@ export default function Categories() {
           onClose={handleCloseAlerteError}
         >
           <Alert onClose={handleCloseAlerteError} severity="error">
-            Adresse e-mail déjà prise
+            Erreur depuis le serveur
           </Alert>
         </Snackbar>
       </Paper>

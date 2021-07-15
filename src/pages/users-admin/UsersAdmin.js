@@ -509,7 +509,7 @@ export default function UsersAdmin() {
           onClose={handleCloseAlerte}
         >
           <Alert onClose={handleCloseAlerte} severity="success">
-            {isEdit ? "Modifications avec succes" : "Bien ajoute"}
+            Votre actions est prise en compte
           </Alert>
         </Snackbar>
         <Snackbar

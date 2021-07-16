@@ -3,12 +3,12 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import IconButton from "@material-ui/core/IconButton";
-import InputAdornment from "@material-ui/core/InputAdornment";
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
 import Paper from "@material-ui/core/Paper";
+import Select from "@material-ui/core/Select";
 import Snackbar from "@material-ui/core/Snackbar";
 import { makeStyles } from "@material-ui/core/styles";
-import Switch from "@material-ui/core/Switch";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
@@ -19,19 +19,11 @@ import TableRow from "@material-ui/core/TableRow";
 import TextField from "@material-ui/core/TextField";
 import DeleteOutline from "@material-ui/icons/DeleteOutline";
 import EditOutlined from "@material-ui/icons/EditOutlined";
-import Visibility from "@material-ui/icons/Visibility";
-import VisibilityOff from "@material-ui/icons/VisibilityOff";
 import MuiAlert from "@material-ui/lab/Alert";
 import axios from "axios";
-import React, { Fragment, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 // components
 import PageTitle from "../../components/PageTitle";
-import {
-  regexCheckNumeric,
-  regexLowerCase,
-  regexSpecialChar,
-  regexUperCase,
-} from "../../validators/password";
 
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -41,18 +33,15 @@ const api = axios.create({
   baseURL: process.env.REACT_APP_REST_API_LOCATION,
 });
 
-function validateEmail(email) {
-  const re = /^((?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\]))$/;
-  return re.test(String(email).toLowerCase());
-}
-
 var columns = [
   { title: "Id", id: "id", hidden: true },
   { title: "Designation", id: "designation" },
+  { title: "Description", id: "description" },
   { title: "Image", id: "image" },
   { title: "Categories ", id: "categories" },
   { title: "Commission ", id: "commission" },
-  { title: "Prix", id: "price" },
+  { title: "Prix de base", id: "price" },
+  { title: "Prix ​​horaire", id: "price_schedule" },
 ];
 
 const useStyles = makeStyles({
@@ -74,29 +63,53 @@ export default function CategoriesTypes() {
   const [openAlertError, setOpenAlertError] = React.useState(false);
   const [state, setState] = React.useState(false);
   const [name, setName] = React.useState("");
+  const [description, setDescription] = React.useState("");
   const [last_name, setLastname] = React.useState("");
   const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
+  const [price, setPrice] = React.useState(0);
+  const [price_schedule, setPriceSchedule] = React.useState(0);
   const [id, setId] = React.useState("");
   const [confirm_password, setConfirmPassword] = React.useState("");
-  const [showpassword, setShowPassword] = React.useState(false);
+  const [categorie, setCategorie] = React.useState("");
+  const [commission, setCommission] = React.useState(0);
   const [showpassword2, setShowPassword2] = React.useState(false);
   const [isEdit, setEdit] = React.useState(false);
+  const [suggestions, setSuggestions] = React.useState([]);
+  const [loadingRequest, setLoadingRequest] = React.useState(false);
+  const [file, setFile] = React.useState(null);
+  const [fileUrl, setFileUrl] = React.useState("");
+  const [image, setImage] = React.useState("");
+
+  function onChange(e) {
+    let files;
+    let file = e.target.files[0];
+    setFile(file);
+    const reader = new FileReader();
+    if (e.dataTransfer) {
+      files = e.dataTransfer.files;
+    } else if (e.target) {
+      files = e.target.files;
+    }
+    reader.onload = () => {
+      setImage(reader.result);
+    };
+    if (reader) {
+      reader.readAsDataURL(files[0]);
+    }
+  }
 
   const handleClickOpen = (data) => {
+    setId(data.id);
     prefilPopUp(data);
     setOpen(true);
   };
 
-  function conditionHelperTextEmail() {
-    if (email && !validateEmail(email)) {
-      return true;
-    }
-  }
+  function conditionHelperTextEmail() {}
 
   function addNewUser() {
     setEdit(true);
     revertPopup();
+
     setOpen(true);
   }
 
@@ -128,58 +141,22 @@ export default function CategoriesTypes() {
       lastname: last_name,
       roles: [1],
     };
-
-    api
-      .post("/admin/users", payload, headers)
-      .then((res) => {
-        payload.id = res.data.data.id;
-        let new_data = [payload];
-        finale_data = new_data.concat(data);
-        setData(finale_data);
-        return res.data.data.id;
-      })
-
-      .then((refId) => {
-        const data = {
-          password: password,
-          isActive: true,
-        };
-        return api.put(`/admin/users/${refId}`, data, headers);
-      })
-      .then((res) => {
-        console.log(res);
-        handleClose();
-        setOpenAlert(true);
-      })
-      .catch((error) => {
-        setOpenAlertError(true);
-        console.log(error);
-      });
   }
 
-  function handleClickShowPassword() {
-    setShowPassword(!showpassword);
-  }
-
-  function handleClickShowPassword2() {
-    setShowPassword2(!showpassword2);
-  }
-
-  function alertMessage() {
-    if (email && !validateEmail(email)) {
-      return "Format email invalide";
-    }
-  }
+  function alertMessage() {}
 
   function updateStateLikeRealTime(new_info) {
     const newList = data.map((res) => {
       if (res.id === id) {
         return {
           ...res,
-          isActive: new_info.isActive,
-          email: new_info.email,
-          firstname: new_info.firstname,
-          lastname: new_info.lastname,
+          designation: new_info.designation,
+          price: new_info.price,
+          price_schedule: new_info.price_schedule,
+          categories: new_info.categories,
+          commission: new_info.commission,
+          descriptions: new_info.descriptions,
+          image: new_info.image,
         };
       }
       return { ...res };
@@ -187,58 +164,33 @@ export default function CategoriesTypes() {
     setData(newList);
   }
 
-  function disabledEdit() {
-    if (
-      !name ||
-      !last_name ||
-      !email ||
-      !validateEmail(email) ||
-      (password && checkPassword(password)) ||
-      (password && password !== confirm_password)
-    ) {
-      return true;
-    }
-  }
+  function disabledEdit() {}
 
-  function disabledAdd() {
-    if (
-      !name ||
-      !last_name ||
-      !email ||
-      !validateEmail(email) ||
-      !password ||
-      !confirm_password ||
-      (password && checkPassword(password)) ||
-      (password && password !== confirm_password)
-    ) {
-      return true;
-    }
-  }
+  function disabledAdd() {}
 
-  function checkPassword() {
-    if (
-      password &&
-      (!regexLowerCase.test(password) ||
-        !regexUperCase.test(password) ||
-        !regexSpecialChar.test(password) ||
-        !regexCheckNumeric.test(password))
-    ) {
-      return true;
-    }
-  }
+  function checkPassword() {}
 
   function prefilPopUp(data) {
-    setName(data.firstname);
-    setEmail(data.email);
-    setLastname(data.lastname);
-    setState(data.isActive);
-    setId(data.id);
+    setName(data.designation);
+    data.image ? setFileUrl(data.image.url) : setFileUrl("");
+    setDescription(data.descriptions);
+    data.categories ? setCategorie(data.categories.id) : setCategorie("");
+    data.price ? setPrice(data.price) : setPrice(0);
+    data.price_schedule
+      ? setPriceSchedule(data.price_schedule)
+      : setPriceSchedule(0);
+    data.commission ? setCommission(data.commission) : setCommission(0);
   }
 
-  function revertPopup(data) {
+  function revertPopup() {
     setName("");
-    setEmail("");
-    setLastname("");
+    setDescription("");
+    setCategorie("");
+    setId("");
+    setFile("");
+    setFileUrl("");
+    setPrice(0);
+    setCommission(0);
   }
 
   const handleChange = (event) => {
@@ -248,6 +200,7 @@ export default function CategoriesTypes() {
   const handleClose = () => {
     setOpen(false);
     setEdit(false);
+    revertPopup();
   };
 
   const handleCloseAlerte = () => {
@@ -285,6 +238,15 @@ export default function CategoriesTypes() {
       .catch((error) => {
         console.log("Error");
       });
+
+    api
+      .get("/services?_sort=id:DESC", headers)
+      .then((res) => {
+        setSuggestions(res.data);
+      })
+      .catch((error) => {
+        console.log("Error");
+      });
   }, []);
 
   function submitEdit() {
@@ -294,30 +256,71 @@ export default function CategoriesTypes() {
         Authorization: `Bearer ${localStorage.getItem("id_token")}`,
       },
     };
+    setLoadingRequest(true);
 
-    let payload = {
-      email: email,
-      firstname: name,
-      lastname: last_name,
-      roles: [1],
-      isActive: state,
+    const toNumbers = (arr) => arr.map(Number);
+    let new_data;
+    const payload = {
+      designation: name,
+      price: parseFloat(price),
+      price_schedule: price_schedule ? parseFloat(price_schedule) : 0,
+      commission: commission ? parseFloat(commission) : 0,
+      categories: categorie ? parseInt(categorie) : null,
+      descriptions: description ? description : "",
     };
-    if (
-      (password && !checkPassword(password)) ||
-      (password && password === confirm_password)
-    ) {
-      payload.password = password;
+
+    if (file) {
+      api
+        .put(`/services-types/${id}`, payload, headers)
+        .then((res) => {
+          payload.id = res.data.id;
+          new_data = res.data;
+          // finale_data = new_data.concat(data);
+
+          return res.data.id;
+        })
+
+        .then((refId) => {
+          const headersFiles = {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${localStorage.getItem("id_token")}`,
+            },
+          };
+          const data = new FormData();
+          data.append("files", file);
+          data.append("ref", "Services-Types");
+          data.append("refId", refId);
+          data.append("field", "image");
+          return api.post(`/upload`, data, headersFiles);
+        })
+        .then((res) => {
+          new_data.image = res.data[0];
+          updateStateLikeRealTime(new_data);
+          setOpenAlert(true);
+          handleClose();
+          setLoadingRequest(false);
+        })
+        .catch((error) => {
+          setOpenAlertError(true);
+          console.log(error);
+          setLoadingRequest(false);
+        });
+    } else {
+      api
+        .put(`/services-types/${id}`, payload, headers)
+        .then((res) => {
+          updateStateLikeRealTime(res.data);
+          setOpenAlert(true);
+          setLoadingRequest(false);
+          handleClose();
+        })
+
+        .catch((err) => {
+          setLoadingRequest(false);
+          console.log("err", err);
+        });
     }
-    api
-      .put(`/admin/users/${id}`, payload, headers)
-      .then((res) => {
-        updateStateLikeRealTime(res.data.data);
-        handleClose();
-        setOpenAlert(true);
-      })
-      .catch((error) => {
-        console.log("Error");
-      });
   }
 
   return (
@@ -358,6 +361,9 @@ export default function CategoriesTypes() {
                         {row.designation}
                       </TableCell>
                       <TableCell key={row.id + `TableCell`}>
+                        {row.descriptions ? row.descriptions : "---"}
+                      </TableCell>
+                      <TableCell key={row.id + `TableCell`}>
                         {row.image ? renderImage(row.image.url) : "Aucune"}
                       </TableCell>
                       <TableCell key={row.id + `TableCell`}>
@@ -373,7 +379,15 @@ export default function CategoriesTypes() {
                           ? row.price + " " + `€`
                           : "Pas encore definie"}
                       </TableCell>
-                      <EditOutlined></EditOutlined>
+                      <TableCell key={row.id + `TableCell`}>
+                        {row.price_schedule
+                          ? row.price_schedule + " " + `€`
+                          : "Pas encore definie"}
+                      </TableCell>
+
+                      <EditOutlined
+                        onClick={handleClickOpen.bind(this, row)}
+                      ></EditOutlined>
                       <DeleteOutline></DeleteOutline>
                     </TableRow>
                   );
@@ -400,11 +414,30 @@ export default function CategoriesTypes() {
             {!isEdit ? `Modifications ${name}` : "Nouveau admin"}
           </DialogTitle>
           <DialogContent>
+            {fileUrl && !image ? (
+              <img
+                width="127px"
+                height="127px"
+                src={process.env.REACT_APP_IMG_LOCATION + fileUrl}
+              />
+            ) : (
+              <img width="127px" height="127px" src={image} />
+            )}
+
+            <Button variant="contained" component="label">
+              {!fileUrl ? "Ajout photo" : "Modifier photo"}
+              <input
+                type="file"
+                accept="image/x-png,image/gif,image/jpeg,image/jpg"
+                hidden
+                onChange={onChange}
+              />
+            </Button>
             <TextField
               autoFocus
               margin="dense"
               id="name"
-              label="Nom"
+              label="Designation"
               value={name}
               onChange={(e) => setName(e.target.value)}
               type="text"
@@ -413,95 +446,64 @@ export default function CategoriesTypes() {
             <TextField
               autoFocus
               margin="dense"
-              id="firstname"
-              label="Prénom"
-              value={last_name}
-              onChange={(e) => setLastname(e.target.value)}
+              id="descriptions"
+              label="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               type="text"
               fullWidth
             />
             <TextField
               autoFocus
               margin="dense"
-              id="email"
-              onChange={(e) => setEmail(e.target.value)}
-              value={email}
-              label="Email Address"
-              type="email"
-              helperText={alertMessage()}
-              error={conditionHelperTextEmail()}
-              fullWidth
-            />
-            <TextField
-              autoFocus
-              margin="dense"
-              onChange={(e) => setPassword(e.target.value)}
-              id="password"
-              label="Mot de passe"
-              type={showpassword ? "text" : "password"}
-              error={checkPassword()}
-              helperText={
-                checkPassword()
-                  ? "Minimum 6 caractères, au moins 1 chiffre, 1 caractère spécial, 1 lettre minuscule et 1 lettre majuscule"
-                  : ""
-              }
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      edge="end"
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}
-                    >
-                      {!showpassword ? <Visibility /> : <VisibilityOff />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              fullWidth
-            />
-            <TextField
-              autoFocus
-              margin="dense"
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              id="confirm-password"
-              label="Confirmation mot de passe"
-              type={showpassword2 ? "text" : "password"}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      edge="end"
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword2}
-                    >
-                      {!showpassword2 ? <Visibility /> : <VisibilityOff />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              error={confirm_password !== "" && confirm_password !== password}
-              helperText={
-                confirm_password !== "" && confirm_password !== password
-                  ? "Les mots de passe que vous avez entrés ne sont pas identiques."
-                  : ""
-              }
+              id="price de base (Montant en Euro)"
+              label="Prix de base"
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+              helperText="Si vous voulez ajouter de virgule , merci de remplacer par un point (Ex:2.55)"
               fullWidth
             />
 
-            {!isEdit ? (
-              <Fragment>
-                Active
-                <Switch
-                  checked={state}
-                  onChange={handleChange}
-                  name="checkedA"
-                  inputProps={{ "aria-label": "secondary checkbox" }}
-                />
-              </Fragment>
-            ) : (
-              ""
-            )}
+            <TextField
+              autoFocus
+              margin="dense"
+              id="Prix ​​horaire "
+              label="Prix ​​horaire (Montant en Euro)"
+              type="number"
+              value={price_schedule}
+              onChange={(e) => setPriceSchedule(e.target.value)}
+              helperText="Si vous voulez ajouter de virgule , merci de remplacer par un point (Ex:2.55)"
+              fullWidth
+            />
+
+            <TextField
+              autoFocus
+              margin="dense"
+              id="commission"
+              label="Commission"
+              value={commission}
+              onChange={(e) => setCommission(e.target.value)}
+              type="number"
+              helperText="Si vous voulez ajouter de virgule , merci de remplacer par un point (Ex:2.55)"
+              fullWidth
+            />
+
+            <InputLabel id="demo-simple-select-label">
+              Sélectionner la categorie
+            </InputLabel>
+            <Select
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              value={categorie}
+              onChange={(e) => setCategorie(e.target.value)}
+              fullWidth
+            >
+              {suggestions.map((res) => (
+                <MenuItem value={res.id}>{res.designation}</MenuItem>
+              ))}
+            </Select>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose} color="primary">
@@ -513,7 +515,7 @@ export default function CategoriesTypes() {
                 color="primary"
                 disabled={disabledEdit()}
               >
-                Modifier
+                {loadingRequest ? "Modifications en cours ..." : "Modifier"}
               </Button>
             ) : (
               <Button
@@ -521,7 +523,7 @@ export default function CategoriesTypes() {
                 onClick={clickAdd}
                 disabled={disabledAdd()}
               >
-                Ajouter
+                {loadingRequest ? "Modifications en cours ..." : "Ajouter"}
               </Button>
             )}
           </DialogActions>
@@ -544,7 +546,7 @@ export default function CategoriesTypes() {
           onClose={handleCloseAlerteError}
         >
           <Alert onClose={handleCloseAlerteError} severity="error">
-            Adresse e-mail déjà prise
+            Erreur depuis le serveur
           </Alert>
         </Snackbar>
       </Paper>

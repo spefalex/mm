@@ -2,6 +2,7 @@ import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -79,6 +80,7 @@ export default function CategoriesTypes() {
   const [file, setFile] = React.useState(null);
   const [fileUrl, setFileUrl] = React.useState("");
   const [image, setImage] = React.useState("");
+  const [openDelete, setOpenDelete] = React.useState(false);
 
   function onChange(e) {
     let files;
@@ -103,6 +105,42 @@ export default function CategoriesTypes() {
     setEdit(true);
     prefilPopUp(data);
     setOpen(true);
+  };
+
+  function onDelete() {
+    const headers = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("id_token")}`,
+      },
+    };
+
+    api
+      .delete(`/services-types/${id}`, headers)
+      .then((res) => {
+        const response = data.filter((categories) => {
+          return categories.id !== id;
+        });
+        setData(response);
+        setOpenAlert(true);
+        setLoadingRequest(false);
+        setOpenDelete(false);
+        revertPopup();
+      })
+
+      .catch((err) => {
+        setLoadingRequest(false);
+        console.log("err", err);
+      });
+  }
+
+  function onAlertDelete(data) {
+    setId(data.id);
+    setOpenDelete(true);
+  }
+
+  const handleCloseDelete = () => {
+    setOpenDelete(false);
   };
 
   function conditionHelperTextEmail() {}
@@ -444,7 +482,9 @@ export default function CategoriesTypes() {
                       <EditOutlined
                         onClick={handleClickOpen.bind(this, row)}
                       ></EditOutlined>
-                      <DeleteOutline></DeleteOutline>
+                      <DeleteOutline
+                        onClick={onAlertDelete.bind(this, row)}
+                      ></DeleteOutline>
                     </TableRow>
                   );
                 })}
@@ -584,7 +624,29 @@ export default function CategoriesTypes() {
             )}
           </DialogActions>
         </Dialog>
-
+        <Dialog
+          open={openDelete}
+          onClose={handleCloseDelete}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">
+            Suprresion Categorie-types
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Êtes vous sûrs ?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDelete} color="primary">
+              Non
+            </Button>
+            <Button onClick={onDelete} color="primary" autoFocus>
+              Oui
+            </Button>
+          </DialogActions>
+        </Dialog>
         <Snackbar
           open={openAlert}
           autoHideDuration={3000}

@@ -2,6 +2,7 @@ import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import IconButton from "@material-ui/core/IconButton";
 import InputAdornment from "@material-ui/core/InputAdornment";
@@ -80,7 +81,7 @@ export default function UsersAdmin() {
   const [showpassword, setShowPassword] = React.useState(false);
   const [showpassword2, setShowPassword2] = React.useState(false);
   const [isEdit, setEdit] = React.useState(false);
-
+  const [openDelete, setOpenDelete] = React.useState(false);
   const [loadingRequest, setLoadingRequest] = React.useState(false);
 
   const handleClickOpen = (data) => {
@@ -100,6 +101,37 @@ export default function UsersAdmin() {
     setOpen(true);
   }
 
+  function onAlertDelete(data) {
+    setId(data.id);
+    setOpenDelete(true);
+  }
+
+  function onDelete() {
+    const headers = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("id_token")}`,
+      },
+    };
+
+    api
+      .delete(`/admin/users/${id}`, headers)
+      .then((res) => {
+        const response = data.filter((categories) => {
+          return categories.id !== id;
+        });
+        setData(response);
+        setOpenAlert(true);
+        setLoadingRequest(false);
+        setOpenDelete(false);
+        revertPopup();
+      })
+
+      .catch((err) => {
+        setLoadingRequest(false);
+        console.log("err", err);
+      });
+  }
   function clickAdd() {
     let finale_data = [];
     setLoadingRequest(true);
@@ -153,6 +185,10 @@ export default function UsersAdmin() {
   function handleClickShowPassword2() {
     setShowPassword2(!showpassword2);
   }
+
+  const handleCloseDelete = () => {
+    setOpenDelete(false);
+  };
 
   function alertMessage() {
     if (email && !validateEmail(email)) {
@@ -356,7 +392,9 @@ export default function UsersAdmin() {
                       <EditOutlined
                         onClick={handleClickOpen.bind(this, row)}
                       ></EditOutlined>
-                      <DeleteOutline></DeleteOutline>
+                      <DeleteOutline
+                        onClick={onAlertDelete.bind(this, row)}
+                      ></DeleteOutline>
                     </TableRow>
                   );
                 })}
@@ -529,6 +567,28 @@ export default function UsersAdmin() {
             Adresse e-mail déjà prise
           </Alert>
         </Snackbar>
+
+        <Dialog
+          open={openDelete}
+          onClose={handleCloseDelete}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">Suprresion Admin</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Êtes vous sûrs ?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDelete} color="primary">
+              Non
+            </Button>
+            <Button onClick={onDelete} color="primary" autoFocus>
+              Oui
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Paper>
     </>
   );

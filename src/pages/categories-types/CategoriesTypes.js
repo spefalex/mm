@@ -100,16 +100,15 @@ export default function CategoriesTypes() {
 
   const handleClickOpen = (data) => {
     setId(data.id);
+    setEdit(true);
     prefilPopUp(data);
     setOpen(true);
   };
 
   function conditionHelperTextEmail() {}
 
-  function addNewUser() {
-    setEdit(true);
+  function addNewCategorieTypes() {
     revertPopup();
-
     setOpen(true);
   }
 
@@ -128,19 +127,62 @@ export default function CategoriesTypes() {
   }
 
   function clickAdd() {
-    let finale_data = [];
+    let new_data;
+    setLoadingRequest(true);
+    let finale_data;
+    const toNumbers = (arr) => arr.map(Number);
     const headers = {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("id_token")}`,
       },
     };
+
     const payload = {
-      email: email,
-      firstname: name,
-      lastname: last_name,
-      roles: [1],
+      designation: name,
+      price: parseFloat(price),
+      price_schedule: price_schedule ? parseFloat(price_schedule) : 0,
+      commission: commission ? parseFloat(commission) : 0,
+      categories: categorie ? parseInt(categorie) : null,
+      descriptions: description ? description : "",
     };
+
+    api
+      .post(`/services-types`, payload, headers)
+      .then((res) => {
+        payload.id = res.data.id;
+        new_data = [res.data];
+
+        return res.data.id;
+      })
+
+      .then((refId) => {
+        const headersFiles = {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("id_token")}`,
+          },
+        };
+        const data = new FormData();
+        data.append("files", file);
+        data.append("ref", "Services-Types");
+        data.append("refId", refId);
+        data.append("field", "image");
+        return api.post(`/upload`, data, headersFiles);
+      })
+      .then((res) => {
+        new_data[0].image = res.data[0];
+        finale_data = new_data.concat(data);
+        setLoadingRequest(false);
+        setData(finale_data);
+        setOpenAlert(true);
+        handleClose();
+      })
+      .catch((error) => {
+        setOpenAlertError(true);
+        setLoadingRequest(false);
+        console.log("err", error);
+      });
   }
 
   function alertMessage() {}
@@ -164,9 +206,17 @@ export default function CategoriesTypes() {
     setData(newList);
   }
 
-  function disabledEdit() {}
+  function disabledEdit() {
+    if (!name || (!fileUrl && !image)) {
+      return true;
+    }
+  }
 
-  function disabledAdd() {}
+  function disabledAdd() {
+    if (!name || !file) {
+      return true;
+    }
+  }
 
   function checkPassword() {}
 
@@ -188,7 +238,9 @@ export default function CategoriesTypes() {
     setCategorie("");
     setId("");
     setFile("");
+    setImage("");
     setFileUrl("");
+    setPriceSchedule(0);
     setPrice(0);
     setCommission(0);
   }
@@ -326,7 +378,11 @@ export default function CategoriesTypes() {
   return (
     <>
       <PageTitle title="Categories Types" />
-      <Button variant="contained" color="primary">
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={addNewCategorieTypes}
+      >
         Ajout nouveau Categorie type
       </Button>
       <Paper className={classes.root}>
@@ -371,17 +427,17 @@ export default function CategoriesTypes() {
                       </TableCell>
                       <TableCell key={row.id + `TableCell`}>
                         {row.commission
-                          ? row.commission + " " + `%`
+                          ? row.commission.toFixed(2) + " " + `%`
                           : "Pas encore definie"}
                       </TableCell>
                       <TableCell key={row.id + `TableCell`}>
                         {row.price
-                          ? row.price + " " + `€`
+                          ? row.price.toFixed(2) + " " + `€`
                           : "Pas encore definie"}
                       </TableCell>
                       <TableCell key={row.id + `TableCell`}>
                         {row.price_schedule
-                          ? row.price_schedule + " " + `€`
+                          ? row.price_schedule.toFixed(2) + " " + `€`
                           : "Pas encore definie"}
                       </TableCell>
 
@@ -411,7 +467,7 @@ export default function CategoriesTypes() {
           aria-labelledby="form-dialog-title"
         >
           <DialogTitle id="form-dialog-title">
-            {!isEdit ? `Modifications ${name}` : "Nouveau admin"}
+            {isEdit ? `Modifications ${name}` : "Nouveau Categories types"}
           </DialogTitle>
           <DialogContent>
             {fileUrl && !image ? (
@@ -436,6 +492,7 @@ export default function CategoriesTypes() {
             <TextField
               autoFocus
               margin="dense"
+              required
               id="name"
               label="Designation"
               value={name}
@@ -461,7 +518,6 @@ export default function CategoriesTypes() {
               type="number"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              required
               helperText="Si vous voulez ajouter de virgule , merci de remplacer par un point (Ex:2.55)"
               fullWidth
             />
@@ -509,7 +565,7 @@ export default function CategoriesTypes() {
             <Button onClick={handleClose} color="primary">
               Annuler
             </Button>
-            {!isEdit ? (
+            {isEdit ? (
               <Button
                 onClick={submitEdit}
                 color="primary"
@@ -523,7 +579,7 @@ export default function CategoriesTypes() {
                 onClick={clickAdd}
                 disabled={disabledAdd()}
               >
-                {loadingRequest ? "Modifications en cours ..." : "Ajouter"}
+                {loadingRequest ? "Ajout en cours ..." : "Ajouter"}
               </Button>
             )}
           </DialogActions>

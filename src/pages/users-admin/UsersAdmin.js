@@ -81,6 +81,8 @@ export default function UsersAdmin() {
   const [showpassword2, setShowPassword2] = React.useState(false);
   const [isEdit, setEdit] = React.useState(false);
 
+  const [loadingRequest, setLoadingRequest] = React.useState(false);
+
   const handleClickOpen = (data) => {
     prefilPopUp(data);
     setOpen(true);
@@ -100,6 +102,7 @@ export default function UsersAdmin() {
 
   function clickAdd() {
     let finale_data = [];
+    setLoadingRequest(true);
     const headers = {
       headers: {
         "Content-Type": "application/json",
@@ -119,6 +122,7 @@ export default function UsersAdmin() {
         payload.id = res.data.data.id;
         let new_data = [payload];
         finale_data = new_data.concat(data);
+
         setData(finale_data);
         return res.data.data.id;
       })
@@ -131,11 +135,12 @@ export default function UsersAdmin() {
         return api.put(`/admin/users/${refId}`, data, headers);
       })
       .then((res) => {
-        console.log(res);
+        setLoadingRequest(false);
         handleClose();
         setOpenAlert(true);
       })
       .catch((error) => {
+        setLoadingRequest(false);
         setOpenAlertError(true);
         console.log(error);
       });
@@ -278,7 +283,7 @@ export default function UsersAdmin() {
         Authorization: `Bearer ${localStorage.getItem("id_token")}`,
       },
     };
-
+    setLoadingRequest(true);
     let payload = {
       email: email,
       firstname: name,
@@ -298,8 +303,10 @@ export default function UsersAdmin() {
         updateStateLikeRealTime(res.data.data);
         handleClose();
         setOpenAlert(true);
+        setLoadingRequest(false);
       })
       .catch((error) => {
+        setLoadingRequest(false);
         console.log("Error");
       });
   }
@@ -488,7 +495,7 @@ export default function UsersAdmin() {
                 color="primary"
                 disabled={disabledEdit()}
               >
-                Modifier
+                {loadingRequest ? "Modifications en cours ..." : "Modifier"}
               </Button>
             ) : (
               <Button
@@ -496,7 +503,7 @@ export default function UsersAdmin() {
                 onClick={clickAdd}
                 disabled={disabledAdd()}
               >
-                Ajouter
+                {loadingRequest ? "Modifications en cours ..." : "Modifier"}
               </Button>
             )}
           </DialogActions>

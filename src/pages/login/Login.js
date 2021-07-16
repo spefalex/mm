@@ -8,18 +8,28 @@ import {
   TextField,
   Typography,
 } from "@material-ui/core";
+// logo
+// import logo from "./logo.svg";
+// styles
+import axios from "axios";
 import classnames from "classnames";
 import moment from "moment";
 import React, { useEffect, useState } from "react";
 import { withRouter } from "react-router-dom";
+import {
+  disconnectSocket,
+  initiateSocketConnection,
+  subscribeToNotifications,
+} from "../../config/socket";
 // context
 import { loginUser, useUserDispatch } from "../../context/UserContext";
 import google from "../../images/google.svg";
 import logo from "../../images/logo.png";
-// logo
-// import logo from "./logo.svg";
-// styles
 import useStyles from "./styles";
+
+const api = axios.create({
+  baseURL: process.env.REACT_APP_REST_API_LOCATION,
+});
 
 function Login(props) {
   var classes = useStyles();
@@ -28,16 +38,37 @@ function Login(props) {
   var userDispatch = useUserDispatch();
 
   useEffect(() => {
-    /* initiateSocketConnection();
+    initiateSocketConnection();
+    console.log("init");
     subscribeToNotifications((err, data) => {
       console.log("data", data);
+      checkMyPresta(data);
     });
     return () => {
       disconnectSocket();
-    };*/
-    // subscribeToNotifications
-  }, []);
+    };
+  }, [subscribeToNotifications]);
 
+  function checkMyPresta(details) {
+    const headers = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiaWF0IjoxNjI2MjQ0MTk2LCJleHAiOjE2Mjg4MzYxOTZ9.sohQGDOpa7kkz8RmvznXDZnJcfS8ouCIQgJtu5tSF48`,
+      },
+    };
+
+    api
+      .get(
+        `/check-prestations/${details.categorie_id}/${details.categorie_type_id}/18?latitude=${details.latitude_position_user}&longitude=${details.longitude_position_user}&idUser=${details.from}&idRequest=${details.idRequest}`,
+        headers,
+      )
+      .then((res) => {
+        console.log("if resulat", res);
+      })
+      .catch((error) => {
+        console.log("Error");
+      });
+  }
   // local
   var [isLoading, setIsLoading] = useState(false);
   var [error, setError] = useState(null);

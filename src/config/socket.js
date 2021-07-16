@@ -2,7 +2,7 @@ import { io } from "socket.io-client";
 
 let socket;
 export const initiateSocketConnection = () => {
-  socket = io("https://api.autocopain.lebackyard.ovh", {
+  socket = io("http://localhost:1337", {
     auth: {
       token: "cde",
     },
@@ -23,3 +23,5 @@ export const subscribeToNotifications = (cb) => {
 export const sendMessage = (data) => {
   if (socket) socket.emit("sendNotification", { data });
 };
+
+

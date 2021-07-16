@@ -3,6 +3,7 @@ import Checkbox from "@material-ui/core/Checkbox";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Paper from "@material-ui/core/Paper";
@@ -24,6 +25,7 @@ import _ from "lodash";
 import React, { useEffect, useState } from "react";
 // components
 import PageTitle from "../../components/PageTitle";
+
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
 }
@@ -66,6 +68,10 @@ export default function Categories() {
   const [tags, setTags] = React.useState([]);
   const [suggestions, setSuggestions] = React.useState([]);
   const [isEdit, setEdit] = React.useState(false);
+  const [openDelete, setOpenDelete] = React.useState(false);
+
+  const [loadingRequest, setLoadingRequest] = React.useState(false);
+
   const [currentCategoriesTypes, setCategoriesTypes] = React.useState([]);
 
   const handleClickOpen = (data) => {
@@ -75,15 +81,96 @@ export default function Categories() {
     setEdit(true);
   };
 
-  function addNewUser() {
+  function addNewCategorie() {
     revertPopup();
     setOpen(true);
   }
 
-  function onDelete(i) {
-    const tags = tags.slice(0);
-    tags.splice(i, 1);
-    setTags(tags);
+  function onAlertDelete(data) {
+    setId(data.id);
+    setOpenDelete(true);
+  }
+
+  function addCategorie() {
+    let new_data;
+    setLoadingRequest(true);
+    let finale_data;
+    const toNumbers = (arr) => arr.map(Number);
+    const headers = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("id_token")}`,
+      },
+    };
+
+    const payload = {
+      designation: name,
+      categorie_types: toNumbers(currentCategoriesTypes),
+    };
+
+    api
+      .post(`/services`, payload, headers)
+      .then((res) => {
+        payload.id = res.data.id;
+        new_data = [res.data];
+
+        return res.data.id;
+      })
+
+      .then((refId) => {
+        const headersFiles = {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("id_token")}`,
+          },
+        };
+        const data = new FormData();
+        data.append("files", file);
+        data.append("ref", "Services");
+        data.append("refId", refId);
+        data.append("field", "image");
+        return api.post(`/upload`, data, headersFiles);
+      })
+      .then((res) => {
+        new_data[0].image = res.data[0];
+        finale_data = new_data.concat(data);
+        setLoadingRequest(false);
+        setData(finale_data);
+        setOpenAlert(true);
+        handleClose();
+      })
+      .catch((error) => {
+        setOpenAlertError(true);
+        setLoadingRequest(false);
+        console.log("err", error);
+      });
+  }
+
+  function onDelete() {
+    const headers = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("id_token")}`,
+      },
+    };
+
+    api
+      .delete(`/services/${id}`, headers)
+      .then((res) => {
+        const response = data.filter((categories) => {
+          return categories.id !== id;
+        });
+        setData(response);
+        setOpenAlert(true);
+        setLoadingRequest(false);
+        setOpenDelete(false);
+        revertPopup();
+      })
+
+      .catch((err) => {
+        setLoadingRequest(false);
+        console.log("err", err);
+      });
   }
 
   function onAddition(tag) {
@@ -192,6 +279,10 @@ export default function Categories() {
     setState(!state);
   };
 
+  const handleCloseDelete = () => {
+    setOpenDelete(false);
+  };
+
   const handleClose = () => {
     setOpen(false);
     revertPopup();
@@ -263,7 +354,7 @@ export default function Categories() {
         Authorization: `Bearer ${localStorage.getItem("id_token")}`,
       },
     };
-
+    setLoadingRequest(true);
     const toNumbers = (arr) => arr.map(Number);
     let new_data;
     const payload = {
@@ -301,10 +392,12 @@ export default function Categories() {
           updateStateLikeRealTime(new_data);
           setOpenAlert(true);
           handleClose();
+          setLoadingRequest(false);
         })
         .catch((error) => {
           setOpenAlertError(true);
           console.log(error);
+          setLoadingRequest(false);
         });
     } else {
       api
@@ -313,10 +406,12 @@ export default function Categories() {
           console.log("res", res.data);
           updateStateLikeRealTime(res.data);
           setOpenAlert(true);
+          setLoadingRequest(false);
           handleClose();
         })
 
         .catch((err) => {
+          setLoadingRequest(false);
           console.log("err", err);
         });
     }
@@ -325,7 +420,7 @@ export default function Categories() {
   return (
     <>
       <PageTitle title="Categories" />
-      <Button variant="contained" color="primary">
+      <Button variant="contained" color="primary" onClick={addNewCategorie}>
         Ajout nouveau Categorie
       </Button>
       <Paper className={classes.root}>
@@ -374,7 +469,9 @@ export default function Categories() {
                       <EditOutlined
                         onClick={handleClickOpen.bind(this, row)}
                       ></EditOutlined>
-                      <DeleteOutline></DeleteOutline>
+                      <DeleteOutline
+                        onClick={onAlertDelete.bind(this, row)}
+                      ></DeleteOutline>
                     </TableRow>
                   );
                 })}
@@ -459,20 +556,42 @@ export default function Categories() {
                 color="primary"
                 disabled={disabledEdit()}
               >
-                Modifier
+                {loadingRequest ? "Modifications en cours ..." : "Modifier"}
               </Button>
             ) : (
               <Button
                 color="primary"
-                onClick={clickAdd}
-                disabled={disabledAdd()}
+                onClick={addCategorie}
+                disabled={disabledEdit()}
               >
-                Ajouter
+                {loadingRequest ? "Ajout en cours ..." : "Ajouter"}
               </Button>
             )}
           </DialogActions>
         </Dialog>
-
+        <Dialog
+          open={openDelete}
+          onClose={handleCloseDelete}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">
+            Suprresion Categorie
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Êtes vous sûrs ?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDelete} color="primary">
+              Non
+            </Button>
+            <Button onClick={onDelete} color="primary" autoFocus>
+              Oui
+            </Button>
+          </DialogActions>
+        </Dialog>
         <Snackbar
           open={openAlert}
           autoHideDuration={3000}

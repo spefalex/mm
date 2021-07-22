@@ -56,6 +56,7 @@ var columns = [
   { title: "N°de Mobile ", id: "phone_code" },
   { title: "Note ", id: "customeReview" },
   { title: "Depannage ", id: "image" },
+  { title: "Mode en ligne ", id: "enligne" },
   { title: "Date d'inscription", id: "created_at" },
 ];
 
@@ -82,7 +83,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Users() {
+export default function Deppaneur() {
   const reactTags = React.useRef();
   const classes = useStyles();
   const [data, setData] = useState([]); //table data
@@ -426,7 +427,7 @@ export default function Users() {
     };
 
     api
-      .get("/users?_where[users_type.id]=1&_sort=id:DESC", headers)
+      .get("/users?_where[users_type.id]=2&_sort=id:DESC", headers)
       .then((res) => {
         console.log("res", res.data);
         setData(res.data);
@@ -509,12 +510,11 @@ export default function Users() {
 
   return (
     <>
-      <PageTitle title="Client" />
+      <PageTitle title="Depanneur" />
       <Button variant="contained" color="primary">
-        Ajout nouveau client
+        Ajout nouveau depanneur
       </Button>
-
-      {/*  <TextField
+      {/*   <TextField
         id="standard-basic"
         label="Tapez ici pour filtrer"
         onChange={cherche.bind(this)}
@@ -603,6 +603,8 @@ export default function Users() {
                           </Badge>
                         )}
                       </TableCell>
+                      <TableCell key={row.id + `TableCell`}> --- </TableCell>
+
                       <TableCell key={row.id + `TableCell`}>
                         {moment(row.created_at).format("LLLL")}
                       </TableCell>

@@ -16,6 +16,7 @@ import Categories from "../../pages/categories/Categories";
 import Charts from "../../pages/charts";
 // pages
 import Dashboard from "../../pages/dashboard";
+import Deppaneur from "../../pages/depanneur/Deppaneur";
 import Icons from "../../pages/icons";
 import Maps from "../../pages/maps";
 import Notifications from "../../pages/notifications";
@@ -50,6 +51,7 @@ function Layout(props) {
             <Route path="/app/dashboard" component={Dashboard} />
             <Route path="/app/users-admin" component={UsersAdmin} />
             <Route path="/app/users-client" component={Users} />
+            <Route path="/app/users-depanneur" component={Deppaneur} />
             <Route path="/app/categories" component={Categories} />
             <Route path="/app/categories-types" component={CategoriesTypes} />
             <Route path="/app/typography" component={Typography} />

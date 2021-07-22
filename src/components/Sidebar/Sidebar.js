@@ -32,12 +32,12 @@ const structure = [
   {
     id: 1,
     label: "Les utilisateurs",
-    link: "/app/ui",
+    //  link: "/app/ui",
     icon: <UIElementsIcon />,
     children: [
       { label: "Admin", link: "/app/users-admin" },
       { label: "Client", link: "/app/users-client" },
-      { label: "Depanneur", link: "/app/ui/maps" },
+      { label: "Depanneur", link: "/app/users-depanneur" },
     ],
   },
   {

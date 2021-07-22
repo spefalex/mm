@@ -9,7 +9,7 @@ import {
   Home as HomeIcon,
   LibraryBooks as LibraryIcon,
   NotificationsNone as NotificationsIcon,
-  QuestionAnswer as SupportIcon
+  QuestionAnswer as SupportIcon,
 } from "@material-ui/icons";
 import classNames from "classnames";
 import React from "react";
@@ -22,11 +22,11 @@ const structure = [
     id: 1,
     label: "Les utilisateurs",
     link: "/app/ui",
-    icon: <UIElementsIcon />,
+    icon: <AssignmentInd />,
     children: [
       { label: "Admin", link: "/app/users-admin" },
       { label: "Client", link: "/app/users-client" },
-      { label: "Depanneur", link: "/app/ui/maps" },
+      { label: "Depanneur", link: "/app/users-depanneur" },
     ],
   },
   {

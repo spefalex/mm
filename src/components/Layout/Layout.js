@@ -22,6 +22,7 @@ import Notifications from "../../pages/notifications";
 import Tables from "../../pages/tables";
 import Typography from "../../pages/typography";
 import UsersAdmin from "../../pages/users-admin/UsersAdmin";
+import Users from "../../pages/users/Users";
 // components
 import Header from "../Header";
 import Sidebar from "../Sidebar";
@@ -48,6 +49,7 @@ function Layout(props) {
           <Switch>
             <Route path="/app/dashboard" component={Dashboard} />
             <Route path="/app/users-admin" component={UsersAdmin} />
+            <Route path="/app/users-client" component={Users} />
             <Route path="/app/categories" component={Categories} />
             <Route path="/app/categories-types" component={CategoriesTypes} />
             <Route path="/app/typography" component={Typography} />

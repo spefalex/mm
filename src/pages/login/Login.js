@@ -8,6 +8,8 @@ import {
   TextField,
   Typography,
 } from "@material-ui/core";
+// import { Elements } from "@stripe/react-stripe-js";
+// import { loadStripe } from "@stripe/stripe-js";
 // logo
 // import logo from "./logo.svg";
 // styles
@@ -16,16 +18,22 @@ import classnames from "classnames";
 import moment from "moment";
 import React, { useEffect, useState } from "react";
 import { withRouter } from "react-router-dom";
-import {
+/*import {
   disconnectSocket,
   initiateSocketConnection,
   subscribeToNotifications,
-} from "../../config/socket";
+} from "../../config/socket";*/
 // context
 import { loginUser, useUserDispatch } from "../../context/UserContext";
 import google from "../../images/google.svg";
 import logo from "../../images/logo.png";
 import useStyles from "./styles";
+
+// Make sure to call `loadStripe` outside of a component’s render to avoid
+// recreating the `Stripe` object on every render.
+/*const stripePromise = loadStripe(
+  "pk_test_51JEojfFJwMbarlt1CrYbKOEPL0lfEB58Ok8b0c5LjTPkBHt8v6CjQEk8LYkomPEbwB31M6IG1bnjuFZ869Zu0qtG00AKrL8I6z",
+);*/
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_REST_API_LOCATION,
@@ -38,17 +46,17 @@ function Login(props) {
   var userDispatch = useUserDispatch();
 
   useEffect(() => {
-    initiateSocketConnection();
-    console.log("init");
+    /* initiateSocketConnection();
+
     subscribeToNotifications((err, data) => {
       console.log("data", data);
       checkMyPresta(data);
     });
     return () => {
       disconnectSocket();
-    };
-  }, [subscribeToNotifications]);
-
+    };*/
+  }, []);
+  // subscribeToNotifications
   function checkMyPresta(details) {
     const headers = {
       headers: {
@@ -112,6 +120,9 @@ function Login(props) {
           </Tabs>
           {activeTabId === 0 && (
             <React.Fragment>
+              {/*    <Elements stripe={stripePromise}>
+                <CheckoutForm />
+              </Elements>*/}
               <Typography variant="h1" className={classes.greeting}>
                 {generateGreetings()}
               </Typography>

@@ -9,7 +9,7 @@ import {
   Home as HomeIcon,
   LibraryBooks as LibraryIcon,
   NotificationsNone as NotificationsIcon,
-  QuestionAnswer as SupportIcon
+  QuestionAnswer as SupportIcon,
 } from "@material-ui/icons";
 import { useTheme } from "@material-ui/styles";
 import classNames from "classnames";
@@ -19,7 +19,7 @@ import { withRouter } from "react-router-dom";
 import {
   toggleSidebar,
   useLayoutDispatch,
-  useLayoutState
+  useLayoutState,
 } from "../../context/LayoutContext";
 import Dot from "./components/Dot";
 // components
@@ -31,9 +31,14 @@ const structure = [
   { id: 0, label: "Dashboard", link: "/app/dashboard", icon: <HomeIcon /> },
   {
     id: 1,
-    label: "Utilisateurs admin",
-    link: "/app/users-admin",
-    icon: <AssignmentInd />,
+    label: "Les utilisateurs",
+    link: "/app/ui",
+    icon: <UIElementsIcon />,
+    children: [
+      { label: "Admin", link: "/app/users-admin" },
+      { label: "Client", link: "/app/users-client" },
+      { label: "Depanneur", link: "/app/ui/maps" },
+    ],
   },
   {
     id: 2,
@@ -47,6 +52,7 @@ const structure = [
     link: "/app/categories-types",
     icon: <AssignmentInd />,
   },
+
   {
     id: 4,
     label: "Typography",

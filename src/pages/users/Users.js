@@ -12,7 +12,9 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import IconButton from "@material-ui/core/IconButton";
+import MenuItem from "@material-ui/core/MenuItem";
 import Paper from "@material-ui/core/Paper";
+import Select from "@material-ui/core/Select";
 import Snackbar from "@material-ui/core/Snackbar";
 import { makeStyles } from "@material-ui/core/styles";
 import Table from "@material-ui/core/Table";
@@ -22,6 +24,7 @@ import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TablePagination from "@material-ui/core/TablePagination";
 import TableRow from "@material-ui/core/TableRow";
+import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import DeleteOutline from "@material-ui/icons/DeleteOutline";
 import EditOutlined from "@material-ui/icons/EditOutlined";
@@ -36,7 +39,10 @@ import "moment/locale/fr";
 import React, { useEffect, useState } from "react";
 // components
 import PageTitle from "../../components/PageTitle/PageTitle";
+import countriesPhone from "../../data/countries-phone.json";
 import NoImage from "../../images/no-image.jpg";
+import { phoneNumberRegex } from "../../validators/input";
+
 moment.locale("fr");
 
 function Alert(props) {
@@ -99,14 +105,16 @@ export default function Users() {
   const [fileUrl, setFileUrl] = React.useState("");
   const [image, setImage] = React.useState("");
   const [dataPanne, setDataPanne] = React.useState([]);
-  const [suggestions, setSuggestions] = React.useState([]);
+  const [phone_number, setPhonenumber] = React.useState("");
   const [isEdit, setEdit] = React.useState(false);
+  const [email, setEmail] = React.useState("");
   const [openDelete, setOpenDelete] = React.useState(false);
   const [openAlertNoDeppanage, setOpenAlertNoDeppanage] = React.useState(false);
   const [loadingRequest, setLoadingRequest] = React.useState(false);
 
   const [currentCategoriesTypes, setCategoriesTypes] = React.useState([]);
 
+  const [dialCode, selectDialCode] = React.useState("+33");
   const [expanded, setExpanded] = React.useState(false);
   const [openPanne, setOpenPanne] = React.useState(false);
 
@@ -125,7 +133,7 @@ export default function Users() {
 
   const handleClickOpen = (data) => {
     prefilPopUp(data);
-    data.image ? setFileUrl(data.image.url) : setFileUrl("");
+    data.avatar ? setFileUrl(data.avatar.url) : setFileUrl("");
     setOpen(true);
     setEdit(true);
   };
@@ -148,6 +156,23 @@ export default function Users() {
 
     return moyenne_user;
   };
+
+  function validateEmail(email) {
+    const re = /^((?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\]))$/;
+    return re.test(String(email).toLowerCase());
+  }
+
+  function conditionHelperTextEmail() {
+    if (email && !validateEmail(email)) {
+      return true;
+    }
+  }
+
+  function alertMessage() {
+    if (email && !validateEmail(email)) {
+      return "Format email invalide";
+    }
+  }
 
   function onAlertDelete(data) {
     setId(data.id);
@@ -326,8 +351,6 @@ export default function Users() {
 
   function clickAdd() {}
 
-  function alertMessage() {}
-
   function updateStateLikeRealTime(new_info) {
     const newList = data.map((res) => {
       if (res.id === id) {
@@ -350,19 +373,28 @@ export default function Users() {
   }
 
   function disabledAdd() {}
+  function conditionPhoneNumber() {
+    if (
+      (phone_number && !phoneNumberRegex.test(phone_number)) ||
+      (phone_number && phone_number.length > 40)
+    ) {
+      return true;
+    }
+  }
 
+  function conditionPhoneNumberHelper() {
+    if (
+      (phone_number && !phoneNumberRegex.test(phone_number)) ||
+      (phone_number && phone_number.length > 40)
+    ) {
+      return "Numero invalide";
+    }
+  }
   function checkPassword() {}
 
   function prefilPopUp(data) {
-    setName(data.designation);
+    selectDialCode(data.phone_code.substring(1));
     setId(data.id);
-    if (data.categorie_types.length > 0) {
-      const response = data.categorie_types.map((res) => {
-        return res.id.toString();
-      });
-
-      setCategoriesTypes(response);
-    }
   }
 
   function revertPopup(data) {
@@ -606,7 +638,9 @@ export default function Users() {
                       <TableCell key={row.id + `TableCell`}>
                         {moment(row.created_at).format("LLLL")}
                       </TableCell>
-                      <EditOutlined></EditOutlined>
+                      <EditOutlined
+                        onClick={handleClickOpen.bind(this, row)}
+                      ></EditOutlined>
                       <DeleteOutline></DeleteOutline>
                     </TableRow>
                   );
@@ -651,6 +685,67 @@ export default function Users() {
                 onChange={onChange}
               />
             </Button>
+
+            <TextField
+              autoFocus
+              margin="dense"
+              id="name"
+              label="Nom"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              type="text"
+              fullWidth
+            />
+
+            <TextField
+              autoFocus
+              margin="dense"
+              id="prenom"
+              label="Prenom"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              type="text"
+              fullWidth
+            />
+            <TextField
+              autoFocus
+              margin="dense"
+              id="email"
+              onChange={(e) => setEmail(e.target.value)}
+              value={email}
+              label="Email Address"
+              type="email"
+              helperText={alertMessage()}
+              error={conditionHelperTextEmail()}
+              fullWidth
+            />
+            <Select
+              labelId="demo-simple-select-label"
+              id="demo-simple-select-code-phone"
+              value={dialCode}
+              onChange={(e) => selectDialCode(e.target.value)}
+            >
+              {countriesPhone.map((country, index) => (
+                <MenuItem
+                  value={country.callingCodes[0]}
+                  key={country.name}
+                  id={`dialCode${index}`}
+                >
+                  <Avatar alt="Remy Sharp" src={"/" + country.flag} />{" "}
+                  {` ${country.name}  (+${country.callingCodes[0]})`}
+                </MenuItem>
+              ))}
+            </Select>
+            <div className="col col-numero">
+              <TextField
+                id="phonenumberbuyer"
+                label="Numero telephone"
+                value={phone_number}
+                onChange={(e) => setPhonenumber(e.target.value)}
+                error={conditionPhoneNumber()}
+                helperText={conditionPhoneNumberHelper()}
+              />
+            </div>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose} color="primary">
